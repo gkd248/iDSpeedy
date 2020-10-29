@@ -8,6 +8,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.Files;
+
+import edu.emory.mathcs.backport.java.util.Arrays;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 
@@ -56,6 +59,39 @@ public class resultCollector{
             e.printStackTrace();
         }
 
+        String[] flakyTests = getFlakyResults(project);
+        String flakyResult = System.lineSeparator() + "Number of flaky tests found: " + flakyTests.length + System.lineSeparator() + "Flaky Tests: " + Arrays.toString(flakyTests);
+        try {
+            Files.write(endPath, flakyResult.getBytes(), StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         System.out.println("Compiled all results from "+project);
+    }
+
+    /*
+        getFlakyResults()
+        Also writes to file with the number of flaky tests found and a list of them
+     */
+    private static String[] getFlakyResults(String project) {
+        File flakyList = new File("../"+project+"/.dtfixingtools/detection-results/flaky-lists.json");
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new FileReader(flakyList));
+            String results = br.readLine();
+            JSONObject json = new JSONObject(results);
+            JSONArray arr = (JSONArray) json.get("dts");
+            String[] tests = new String[arr.length()];
+            for(int i=0; i<tests.length; i++) {
+                tests[i]=arr.optString(i);
+            }
+            return tests;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
