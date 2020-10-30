@@ -5,3 +5,5 @@ target/
 *.o
 *.hi
 *.idea
+*.iml
+sos00-monolithrunTimeResults.txt
