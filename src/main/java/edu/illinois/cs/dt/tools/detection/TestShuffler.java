@@ -67,7 +67,7 @@ public class TestShuffler {
 
         //Load all previous orders into checkedOrders
         try {
-            JsonReader getLocalJsonFile = new JsonReader(new FileReader(DetectorPathManager.NEWTEST_TESTORDER.toString()));
+            JsonReader getLocalJsonFile = new JsonReader(new FileReader(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.NEWTEST_TESTORDER).toString()));
             Type mapTokenType = new TypeToken<Set<String>>(){}.getType();
             Set<String> jsonMap = new Gson().fromJson(getLocalJsonFile, mapTokenType);
             if(jsonMap != null) {
@@ -118,42 +118,49 @@ public class TestShuffler {
 
         List<String> returnList = new ArrayList<>();
 
-        try{
-            JsonReader getLocalJsonFile = new JsonReader(new FileReader(DetectorPathManager.PREVIOUS_TESTS.toString()));
-//                Type mapTokenType = new TypeToken<Map<String, Map>>(){}.getType();
-            Type mapTokenType = new TypeToken<List<String>>(){}.getType();
-            // Map<String, String[]> jsonMap = new Gson().fromJson(getLocalJsonFile, mapTokenType);
-            List<String> jsonMap = new Gson().fromJson(getLocalJsonFile, mapTokenType);
 
-            // check is there are any new tests
-            List<String> newTests = new ArrayList<>();
-            for(int j=0;j<tests.size();j++){
-                String test = tests.get(j);
+        List<String> jsonMap;
+
+        try {
+            JsonReader getLocalJsonFile = new JsonReader(new FileReader(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.PREVIOUS_TESTS).toString()));
+//                Type mapTokenType = new TypeToken<Map<String, Map>>(){}.getType();
+            Type mapTokenType = new TypeToken<List<String>>() {
+            }.getType();
+            // Map<String, String[]> jsonMap = new Gson().fromJson(getLocalJsonFile, mapTokenType);
+            jsonMap = new Gson().fromJson(getLocalJsonFile, mapTokenType);
+        }
+        catch (IOException e) {
+            jsonMap = new ArrayList<String>();
+        }
+        // check is there are any new tests
+        List<String> newTests = new ArrayList<>();
+        for(int j=0;j<tests.size();j++){
+            String test = tests.get(j);
 //                    if(!jsonMap.containsValue(test)){
 //                        newTests.add(test);
 //                    }
-                if(!jsonMap.contains(test)){
-                    System.out.println("***Found a new test***");
-                    newTests.add(test);
-                }
+            if(!jsonMap.contains(test)){
+                System.out.println("***Found a new test***");
+                newTests.add(test);
             }
+        }
 
-            // if no new tests just sent new shuffled order
-            // need to make this more sophisticated to account for multiple new tests at once
-            if(newTests.isEmpty()){
-                System.out.println("***No new tests found, just shuffling tests***");
-                //Should add test order to checkedOrders set
-                List<String> randOrder = generateShuffled();
-                while(checkedOrders.contains(randOrder.toString())) {
-                    randOrder = generateShuffled();
-                }
-                checkedOrders.add(randOrder.toString());
+        // if no new tests just sent new shuffled order
+        // need to make this more sophisticated to account for multiple new tests at once
+        if(newTests.isEmpty()){
+            System.out.println("***No new tests found, just shuffling tests***");
+            //Should add test order to checkedOrders set
+            List<String> randOrder = generateShuffled();
+            while(checkedOrders.contains(randOrder.toString())) {
+                randOrder = generateShuffled();
+            }
+            checkedOrders.add(randOrder.toString());
 
-                // write new test order to file
+            // write new test order to file
 //                Gson gson = new Gson();
 //                Type gsonType = new TypeToken<List>(){}.getType();
 //                String gsonString = gson.toJson(randOrder,gsonType);
-                //Check to see if file exists
+            //Check to see if file exists
 //                if(!accessedNewTests) {
 //                    Files.write(DetectorPathManager.NEWTEST_TESTORDER, gsonString.getBytes());
 //                    accessedNewTests = true;
@@ -164,76 +171,73 @@ public class TestShuffler {
 
 
 
-                returnList = randOrder;
-            } else if(processedIndex >= newTests.size()){
-                System.out.println("***No new tests left to process, just shuffling tests***");
-                List<String> randOrder = generateShuffled();
-                while(checkedOrders.contains(randOrder.toString())) {
-                    randOrder = generateShuffled();
-                }
-                checkedOrders.add(randOrder.toString());
+            returnList = randOrder;
+        } else if(processedIndex >= newTests.size()){
+            System.out.println("***No new tests left to process, just shuffling tests***");
+            List<String> randOrder = generateShuffled();
+            while(checkedOrders.contains(randOrder.toString())) {
+                randOrder = generateShuffled();
+            }
+            checkedOrders.add(randOrder.toString());
 
-                // write new test order to file
+            // write new test order to file
 //                Gson gson = new Gson();
 //                Type gsonType = new TypeToken<List>(){}.getType();
 //                String gsonString = gson.toJson(randOrder,gsonType);
 //                Files.write(DetectorPathManager.NEWTEST_TESTORDER, gsonString.getBytes(), StandardOpenOption.APPEND);
 
-                returnList = randOrder;
-            } else {
-                System.out.println("***New tests were found***");
-                // if there are new tests, run them at the front and back
-                List<String> testOrder = new ArrayList<>();
-                if(!newTestsRan.contains("Front")){
-                    if(newTests.size() > 1) {
-                        //Put one of the tests at the front
-                        testOrder.add(newTests.get(processedIndex));
-                        newTests.remove(processedIndex);
-                        Collections.shuffle(newTests); //Should randomize the order in which new tests are added
-                        testOrder.addAll(newTests);
-                    }
-                    else {
-                        testOrder.addAll(newTests);
-                    }
-//                    testOrder.addAll(jsonMap.keySet());
-                    testOrder.addAll(jsonMap);
-                    newTestsRan.add("Front");
-                } else if(newTestsRan.contains("Front") && !newTestsRan.contains("Back")){
-                    testOrder.addAll(jsonMap);
-                    String newTest = newTests.remove(processedIndex);
-                    if (!(newTests.size()>0)) {
-                        testOrder.add(newTest);
-                    } else{
-                        Collections.shuffle(newTests);
-                        testOrder.addAll(newTests);
-                        testOrder.add(newTest);
-                    }
-                    processedIndex++;
-                    newTestsRan.remove("Front");
-                } else{
-                    return generateShuffled();
+            returnList = randOrder;
+        } else {
+            System.out.println("***New tests were found***");
+            // if there are new tests, run them at the front and back
+            List<String> testOrder = new ArrayList<>();
+            if(!newTestsRan.contains("Front")){
+                if(newTests.size() > 1) {
+                    //Put one of the tests at the front
+                    testOrder.add(newTests.get(processedIndex));
+                    newTests.remove(processedIndex);
+                    Collections.shuffle(newTests); //Should randomize the order in which new tests are added
+                    testOrder.addAll(newTests);
                 }
+                else {
+                    testOrder.addAll(newTests);
+                }
+//                    testOrder.addAll(jsonMap.keySet());
+                testOrder.addAll(jsonMap);
+                newTestsRan.add("Front");
+            } else if(newTestsRan.contains("Front") && !newTestsRan.contains("Back")){
+                testOrder.addAll(jsonMap);
+                String newTest = newTests.remove(processedIndex);
+                if (!(newTests.size()>0)) {
+                    testOrder.add(newTest);
+                } else{
+                    Collections.shuffle(newTests);
+                    testOrder.addAll(newTests);
+                    testOrder.add(newTest);
+                }
+                processedIndex++;
+                newTestsRan.remove("Front");
+            } else{
+                return generateShuffled();
+            }
 
-                // write new test order to file
+            // write new test order to file
 //                Gson gson = new Gson();
 //                Type gsonType = new TypeToken<List>(){}.getType();
 //                String gsonString = gson.toJson(testOrder,gsonType);
-                if(!overwritten){
-                    checkedOrders.add(testOrder.toString());
+            if(!overwritten){
+                checkedOrders.add(testOrder.toString());
 //                    System.out.println(gsonString);
 //                    Files.write(DetectorPathManager.NEWTEST_TESTORDER, gsonString.getBytes());
-                    overwritten = true;
-                    accessedNewTests = true;
-                } else{
-                    checkedOrders.add(testOrder.toString());
+                overwritten = true;
+                accessedNewTests = true;
+            } else{
+                checkedOrders.add(testOrder.toString());
 //                    System.out.println(gsonString);
 //                    Files.write(DetectorPathManager.NEWTEST_TESTORDER, gsonString.getBytes(), StandardOpenOption.APPEND);
-                }
-
-                returnList = testOrder;
             }
-        } catch(IOException e){
-            System.out.println(e);
+
+            returnList = testOrder;
         }
 
         //Add all previous rounds to JSON file
@@ -242,7 +246,7 @@ public class TestShuffler {
             Type gsonType = new TypeToken<Set>(){}.getType();
             String gsonString = gson.toJson(checkedOrders,gsonType);
             try {
-                Files.write(DetectorPathManager.NEWTEST_TESTORDER, gsonString.getBytes());
+                Files.write(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.NEWTEST_TESTORDER), gsonString.getBytes(), Files.exists(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.NEWTEST_TESTORDER)) ? StandardOpenOption.WRITE : StandardOpenOption.CREATE);
             } catch (IOException e) {
                 e.printStackTrace();
             }

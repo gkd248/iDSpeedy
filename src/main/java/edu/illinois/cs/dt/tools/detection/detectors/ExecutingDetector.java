@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -109,7 +110,7 @@ public abstract class ExecutingDetector implements Detector, VerbosePrinter {
         Gson gson = new Gson();
         Type gsonType = new TypeToken<List>(){}.getType();
         String gsonString = gson.toJson(tests,gsonType);
-        Files.write(DetectorPathManager.PREVIOUS_TESTS, gsonString.getBytes());
+        Files.write(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.PREVIOUS_TESTS), gsonString.getBytes(), Files.exists(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.PREVIOUS_TESTS)) ? StandardOpenOption.WRITE : StandardOpenOption.CREATE);
 
         Files.write(dtListPath, dtList.toString().getBytes());
         Files.write(listPath, StringUtil.unlines(dtList.names()).getBytes());
