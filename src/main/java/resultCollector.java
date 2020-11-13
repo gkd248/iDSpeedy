@@ -22,7 +22,12 @@ public class resultCollector{
 
         String project = args[0];
         String runner = args[1];
-        Path endPath = Paths.get(project.replace("/","")+"runTimeResults.txt");
+        try{
+            Files.createDirectories(Paths.get("results/"+runner+"/"));
+        } catch(IOException e){
+            System.out.println("Failed to create results directory");
+        }
+        Path endPath = Paths.get("results/"+runner+"/"+project.replace("/","")+"runTimeResults.txt");
         Double overallTime = 0.0d;
 
         System.out.println(System.getProperty("user.dir"));
