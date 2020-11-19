@@ -128,26 +128,32 @@ public class IncrementalShuffler {
             System.out.println("***No new tests found, just shuffling tests***");
             //Should add test order to checkedOrders set
             List<String> randOrder = generateShuffled();
-            while(checkedOrders.contains(randOrder.toString()) && checkedOrders.size() < maxPermutations) {
+            int permutations = 0;
+            while(checkedOrders.contains(randOrder.toString()) && checkedOrders.size() < maxPermutations && permutations < maxPermutations) {
                 randOrder = generateShuffled();
+                permutations++;
+                System.out.println("generating random order");
             }
-            if(checkedOrders.size() < maxPermutations){
+            if(checkedOrders.size() < maxPermutations && !(checkedOrders.contains(randOrder.toString()))){
                 checkedOrders.add(randOrder.toString());
+                System.out.println("recording new order");
             } else{
-                System.out.println("***All test orders have been run, running random order***");
+                System.out.println("***A new test order was not randomly generated, running random order***");
             }
 
             returnList = randOrder;
         } else if(processedIndex >= newTests.size()){
             System.out.println("***No new tests left to process, just shuffling tests***");
             List<String> randOrder = generateShuffled();
-            while(checkedOrders.contains(randOrder.toString()) && checkedOrders.size() < maxPermutations) {
+            int permutations = 0;
+            while(checkedOrders.contains(randOrder.toString()) && checkedOrders.size() < maxPermutations && permutations < maxPermutations) {
                 randOrder = generateShuffled();
+                permutations++;
             }
-            if(checkedOrders.size() < maxPermutations){
+            if(checkedOrders.size() < maxPermutations && !(checkedOrders.contains(randOrder.toString()))){
                 checkedOrders.add(randOrder.toString());
             } else{
-                System.out.println("***All test orders have been run, running random order***");
+                System.out.println("***A new test order was not randomly generated, running random order***");
             }
 
             returnList = randOrder;
