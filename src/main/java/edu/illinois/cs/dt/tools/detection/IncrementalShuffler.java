@@ -57,7 +57,7 @@ public class IncrementalShuffler {
         List<String> jsonMap;
 
         try {
-            JsonReader getLocalJsonFile = new JsonReader(new FileReader(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.PREVIOUS_TESTS).toString()));
+            JsonReader getLocalJsonFile = new JsonReader(new FileReader(DetectorPathManager.previousTestsPath().toString()));
             Type mapTokenType = new TypeToken<List<String>>() {
             }.getType();
             jsonMap = new Gson().fromJson(getLocalJsonFile, mapTokenType);
@@ -91,7 +91,7 @@ public class IncrementalShuffler {
 
         //Load all previous orders into checkedOrders
         try {
-            JsonReader getLocalJsonFile = new JsonReader(new FileReader(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.NEWTEST_TESTORDER).toString()));
+            JsonReader getLocalJsonFile = new JsonReader(new FileReader(DetectorPathManager.newTestOrderPath().toString()));
             Type mapTokenType = new TypeToken<Set<String>>(){}.getType();
             Set<String> jsonMapOrders = new Gson().fromJson(getLocalJsonFile, mapTokenType);
             if(jsonMapOrders != null) {
@@ -168,10 +168,22 @@ public class IncrementalShuffler {
 //                    newTests.remove(processedIndex);
 //                    Collections.shuffle(newTests); //Should randomize the order in which new tests are added
 //                    testOrder.addAll(newTests);
+
+                System.out.println("ProcessedIdx: "+processedIndex);
+
                 String testToAdd = newTests.get(processedIndex);
+                System.out.println("Test to add to front: "+testToAdd);
+
                 String[] testParts = testToAdd.split("\\.");
-                String className = testParts[testParts.length - 2];
+//                String className = testParts[testParts.length - 2];
+                String className = TestShuffler.className(testToAdd);
+
+                System.out.println("Class Name: "+className);
+
                 List<String> testsInClass = classToMethods.get(className);
+
+
+
                 testsInClass.remove(testToAdd);
                 Collections.shuffle(testsInClass);
                 testsInClass.add(0, testToAdd);
@@ -183,9 +195,12 @@ public class IncrementalShuffler {
             } else if(newTestsRan.contains("Front") && !newTestsRan.contains("Back")){
 
                 String testToAdd = newTests.remove(processedIndex);
+                System.out.println("Test to add to back: "+testToAdd);
 
                 String[] testParts = testToAdd.split("\\.");
-                String className = testParts[testParts.length - 2];
+                // String className = testParts[testParts.length - 2];
+                String className = TestShuffler.className(testToAdd);
+                System.out.println("Class Name: "+className);
                 List<String> testsInClass = classToMethods.get(className);
                 testsInClass.remove(testToAdd);
                 Collections.shuffle(testsInClass);

@@ -54,7 +54,8 @@ public class RunnerPathManager extends PathManager {
         Files.createDirectories(resultPath.getParent());
         Files.write(resultPath, testRunResult.toString().getBytes());
 
-        Files.createDirectories(DetectorPathManager.INCREMENTAL);
+        Files.createDirectories(DetectorPathManager.incrementalPath());
+
     }
 
     public static void clearTestRuns() throws IOException {

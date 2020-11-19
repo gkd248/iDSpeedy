@@ -110,7 +110,8 @@ public abstract class ExecutingDetector implements Detector, VerbosePrinter {
         Gson gson = new Gson();
         Type gsonType = new TypeToken<List>(){}.getType();
         String gsonString = gson.toJson(tests,gsonType);
-        Files.write(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.PREVIOUS_TESTS), gsonString.getBytes(), Files.exists(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.PREVIOUS_TESTS)) ? StandardOpenOption.WRITE : StandardOpenOption.CREATE);
+        Files.write(DetectorPathManager.previousTestsPath(), gsonString.getBytes(), Files.exists(DetectorPathManager.previousTestsPath())
+                ? StandardOpenOption.WRITE : StandardOpenOption.CREATE);
 
         Files.write(dtListPath, dtList.toString().getBytes());
         Files.write(listPath, StringUtil.unlines(dtList.names()).getBytes());

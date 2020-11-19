@@ -64,4 +64,6 @@ public class DetectorPathManager extends PathManager {
     public static Path incrementalPath() {return path(INCREMENTAL);}
 
     public static Path newTestOrderPath() {return incrementalPath().resolve(NEWTEST_TESTORDER);}
+
+    public static Path previousTestsPath() {return incrementalPath().resolve(PREVIOUS_TESTS);}
 }
