@@ -32,7 +32,7 @@ public class IncrementalShuffler {
     private boolean overwritten = false;
     private boolean accessedNewTests = false;
     private long maxPermutations;
-    private boolean foundTests = false;
+    private List<String> newTests = new ArrayList<>();
 
     //Variable to keep track of which new tests have been processed
     private int processedIndex = 0;
@@ -54,6 +54,27 @@ public class IncrementalShuffler {
             classToMethods.get(className).add(test);
         }
 
+        List<String> jsonMap;
+
+        try {
+            JsonReader getLocalJsonFile = new JsonReader(new FileReader(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.PREVIOUS_TESTS).toString()));
+            Type mapTokenType = new TypeToken<List<String>>() {
+            }.getType();
+            jsonMap = new Gson().fromJson(getLocalJsonFile, mapTokenType);
+        }
+        catch (IOException e) {
+            jsonMap = new ArrayList<String>();
+        }
+
+        for(int j=0;j<tests.size();j++){
+            String test = tests.get(j);
+
+            if(!jsonMap.contains(test)){
+                System.out.println("***Found a new test***");
+                newTests.add(test);
+            }
+        }
+
         int numClasses = 0;
         long numPermutations = 0;
         Iterator<String> it = classToMethods.keySet().iterator();
@@ -72,9 +93,9 @@ public class IncrementalShuffler {
         try {
             JsonReader getLocalJsonFile = new JsonReader(new FileReader(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.NEWTEST_TESTORDER).toString()));
             Type mapTokenType = new TypeToken<Set<String>>(){}.getType();
-            Set<String> jsonMap = new Gson().fromJson(getLocalJsonFile, mapTokenType);
-            if(jsonMap != null) {
-                checkedOrders = jsonMap;
+            Set<String> jsonMapOrders = new Gson().fromJson(getLocalJsonFile, mapTokenType);
+            if(jsonMapOrders != null) {
+                checkedOrders = jsonMapOrders;
             }
         } catch (FileNotFoundException e) {
             System.out.println("Accessing newTest-testOrder.json for the first time.");
@@ -104,32 +125,6 @@ public class IncrementalShuffler {
         roundsRemaining--;
 
         List<String> returnList = new ArrayList<>();
-
-
-        List<String> jsonMap;
-
-        try {
-            JsonReader getLocalJsonFile = new JsonReader(new FileReader(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.PREVIOUS_TESTS).toString()));
-            Type mapTokenType = new TypeToken<List<String>>() {
-            }.getType();
-            jsonMap = new Gson().fromJson(getLocalJsonFile, mapTokenType);
-        }
-        catch (IOException e) {
-            jsonMap = new ArrayList<String>();
-        }
-        // check is there are any new tests
-        List<String> newTests = new ArrayList<>();
-        for(int j=0;j<tests.size();j++){
-            String test = tests.get(j);
-
-            if(!jsonMap.contains(test)){
-                if(!foundTests){
-                    System.out.println("***Found a new test***");
-                }
-                newTests.add(test);
-            }
-        }
-        foundTests = true;
 
         // if no new tests just sent new shuffled order
         // need to make this more sophisticated to account for multiple new tests at once
@@ -167,29 +162,38 @@ public class IncrementalShuffler {
             // if there are new tests, run them at the front and back
             List<String> testOrder = new ArrayList<>();
             if(!newTestsRan.contains("Front")){
-                if(newTests.size() > 1) {
-                    //Put one of the tests at the front
-                    testOrder.add(newTests.get(processedIndex));
-                    newTests.remove(processedIndex);
-                    Collections.shuffle(newTests); //Should randomize the order in which new tests are added
-                    testOrder.addAll(newTests);
-                }
-                else {
-                    testOrder.addAll(newTests);
-                }
 
-                testOrder.addAll(jsonMap);
+                //Put one of the tests at the front
+//                    testOrder.add(newTests.get(processedIndex));
+//                    newTests.remove(processedIndex);
+//                    Collections.shuffle(newTests); //Should randomize the order in which new tests are added
+//                    testOrder.addAll(newTests);
+                String testToAdd = newTests.get(processedIndex);
+                String[] testParts = testToAdd.split("\\.");
+                String className = testParts[testParts.length - 2];
+                List<String> testsInClass = classToMethods.get(className);
+                testsInClass.remove(testToAdd);
+                Collections.shuffle(testsInClass);
+                testsInClass.add(0, testToAdd);
+
+                testOrder.addAll(testsInClass);
+                testOrder.addAll(generateExclusiveShuffled(className));
+
                 newTestsRan.add("Front");
             } else if(newTestsRan.contains("Front") && !newTestsRan.contains("Back")){
-                testOrder.addAll(jsonMap);
-                String newTest = newTests.remove(processedIndex);
-                if (!(newTests.size()>0)) {
-                    testOrder.add(newTest);
-                } else{
-                    Collections.shuffle(newTests);
-                    testOrder.addAll(newTests);
-                    testOrder.add(newTest);
-                }
+
+                String testToAdd = newTests.remove(processedIndex);
+
+                String[] testParts = testToAdd.split("\\.");
+                String className = testParts[testParts.length - 2];
+                List<String> testsInClass = classToMethods.get(className);
+                testsInClass.remove(testToAdd);
+                Collections.shuffle(testsInClass);
+                testsInClass.add(testToAdd);
+
+                testOrder.addAll(generateExclusiveShuffled(className));
+                testOrder.addAll(testsInClass);
+
                 processedIndex++;
                 newTestsRan.remove("Front");
             } else{
@@ -212,7 +216,8 @@ public class IncrementalShuffler {
             Type gsonType = new TypeToken<Set>(){}.getType();
             String gsonString = gson.toJson(checkedOrders,gsonType);
             try {
-                Files.write(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.NEWTEST_TESTORDER), gsonString.getBytes(), Files.exists(DetectorPathManager.INCREMENTAL.resolve(DetectorPathManager.NEWTEST_TESTORDER)) ? StandardOpenOption.WRITE : StandardOpenOption.CREATE);
+                Files.write(DetectorPathManager.newTestOrderPath(), gsonString.getBytes(),
+                        Files.exists(DetectorPathManager.newTestOrderPath()) ? StandardOpenOption.WRITE : StandardOpenOption.CREATE);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -223,6 +228,18 @@ public class IncrementalShuffler {
 
     private List<String> generateShuffled() {
         return generateWithClassOrder(new RandomList<>(classToMethods.keySet()).shuffled());
+    }
+
+    //Generate shuffled list without the specified class
+    private List<String> generateExclusiveShuffled(String className) {
+        Iterator<String> classesIt = classToMethods.keySet().iterator();
+        List<String> classes = new ArrayList<>();
+        while (classesIt.hasNext()) {
+            classes.add(classesIt.next());
+        }
+        classes.remove(className);
+
+        return generateWithClassOrder(new RandomList<>(classes).shuffled());
     }
 
     private List<String> generateWithClassOrder(final List<String> classOrder) {
