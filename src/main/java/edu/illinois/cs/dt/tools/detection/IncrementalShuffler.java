@@ -1,5 +1,6 @@
 package edu.illinois.cs.dt.tools.detection;
 
+import com.google.common.math.IntMath;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.reflect.TypeToken;
@@ -14,12 +15,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 
 public class IncrementalShuffler {
     public static String className(final String testName) {
@@ -35,7 +31,7 @@ public class IncrementalShuffler {
     private final Set<String> newTestsRan = new HashSet<>();
     private boolean overwritten = false;
     private boolean accessedNewTests = false;
-    private int maxPermutations;
+    private long maxPermutations;
     private boolean foundTests = false;
 
     //Variable to keep track of which new tests have been processed
@@ -45,7 +41,6 @@ public class IncrementalShuffler {
     public IncrementalShuffler(final String type, final int rounds, final List<String> tests) {
         this.type = type;
         this.tests = tests;
-        maxPermutations = factorial(tests.size());
         roundsRemaining = rounds;
         classToMethods = new HashMap<>();
 
@@ -58,6 +53,20 @@ public class IncrementalShuffler {
 
             classToMethods.get(className).add(test);
         }
+
+        int numClasses = 0;
+        long numPermutations = 0;
+        Iterator<String> it = classToMethods.keySet().iterator();
+        while(it.hasNext()){
+            String className = it.next();
+            int numTests = classToMethods.get(className).size();
+            numPermutations += IntMath.factorial(numTests);
+            numClasses++;
+        }
+
+        // formula
+        maxPermutations = IntMath.factorial(numClasses) * numPermutations;
+        System.out.println(maxPermutations);
 
         //Load all previous orders into checkedOrders
         try {
@@ -128,32 +137,28 @@ public class IncrementalShuffler {
             System.out.println("***No new tests found, just shuffling tests***");
             //Should add test order to checkedOrders set
             List<String> randOrder = generateShuffled();
-            int permutations = 0;
-            while(checkedOrders.contains(randOrder.toString()) && checkedOrders.size() < maxPermutations && permutations < maxPermutations) {
+            while(checkedOrders.contains(randOrder.toString()) && checkedOrders.size() < maxPermutations) {
                 randOrder = generateShuffled();
-                permutations++;
                 System.out.println("generating random order");
             }
-            if(checkedOrders.size() < maxPermutations && !(checkedOrders.contains(randOrder.toString()))){
+            if(checkedOrders.size() < maxPermutations){
                 checkedOrders.add(randOrder.toString());
                 System.out.println("recording new order");
             } else{
-                System.out.println("***A new test order was not randomly generated, running random order***");
+                System.out.println("***All test orders run, running random order***");
             }
 
             returnList = randOrder;
         } else if(processedIndex >= newTests.size()){
             System.out.println("***No new tests left to process, just shuffling tests***");
             List<String> randOrder = generateShuffled();
-            int permutations = 0;
-            while(checkedOrders.contains(randOrder.toString()) && checkedOrders.size() < maxPermutations && permutations < maxPermutations) {
+            while(checkedOrders.contains(randOrder.toString()) && checkedOrders.size() < maxPermutations) {
                 randOrder = generateShuffled();
-                permutations++;
             }
-            if(checkedOrders.size() < maxPermutations && !(checkedOrders.contains(randOrder.toString()))){
+            if(checkedOrders.size() < maxPermutations){
                 checkedOrders.add(randOrder.toString());
             } else{
-                System.out.println("***A new test order was not randomly generated, running random order***");
+                System.out.println("***All test orders run, running random order***");
             }
 
             returnList = randOrder;
