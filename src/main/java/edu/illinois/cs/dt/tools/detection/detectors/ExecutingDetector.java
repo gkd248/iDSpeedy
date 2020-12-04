@@ -98,7 +98,7 @@ public abstract class ExecutingDetector implements Detector, VerbosePrinter {
 
         // *** keeping track of previous tests for next run ***
         System.out.println(DetectorPathManager.ORIGINAL_ORDER.toString());
-        Scanner read = new Scanner(new File(".dtfixingtools/original-order"));
+        Scanner read = new Scanner(new File(DetectorPathManager.originalOrderPath().toString()));
         read.useDelimiter("\n");
         List<String> tests = new ArrayList<>();
         while (read.hasNext())

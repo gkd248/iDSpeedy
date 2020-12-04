@@ -31,8 +31,6 @@ public class incrementalResultCollector {
                         if(!foundFlakyTests.contains(test))
                             foundFlakyTests.add(test);
                     }
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
