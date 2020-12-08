@@ -17,7 +17,10 @@ import edu.illinois.cs.dt.tools.runner.data.DependentTestList;
 import edu.illinois.cs.testrunner.data.results.TestRunResult;
 import edu.illinois.cs.testrunner.runner.Runner;
 import edu.illinois.cs.testrunner.configuration.Configuration;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -113,8 +116,32 @@ public abstract class ExecutingDetector implements Detector, VerbosePrinter {
         Files.write(DetectorPathManager.previousTestsPath(), gsonString.getBytes(), Files.exists(DetectorPathManager.previousTestsPath())
                 ? StandardOpenOption.WRITE : StandardOpenOption.CREATE);
 
-        Files.write(dtListPath, dtList.toString().getBytes());
         Files.write(listPath, StringUtil.unlines(dtList.names()).getBytes());
+
+        if(name.contains("incremental") && Files.exists(dtListPath)) {
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(new File(dtListPath.toString())));
+                String jsonData = br.readLine();
+                JSONObject json = new JSONObject(jsonData);
+                JSONArray arr = (JSONArray) json.get("dts");
+                ArrayList<DependentTest> prevDts = new ArrayList<DependentTest>();
+                JSONObject dtJson = new JSONObject(dtList.toString());
+                JSONArray arrDts = (JSONArray) dtJson.get("dts");
+                for(Object jObj : arrDts) {
+                    arr.put(jObj);
+                }
+                JSONObject jsonOut = new JSONObject();
+                jsonOut.put("dts", arr);
+                Files.write(dtListPath, jsonOut.toString().getBytes());
+
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        Files.write(dtListPath, dtList.toString().getBytes());
     }
 
     private class RunnerIterator implements Iterator<DependentTest> {
