@@ -15,6 +15,7 @@ public class DetectorPathManager extends PathManager {
     public static final Path MVN_TEST_TIME_LOG = Paths.get("mvn-test-time.log");
     public static final Path PREVIOUS_TESTS = Paths.get("previous-tests.json");
     public static final Path NEWTEST_TESTORDER = Paths.get("newTest-testOrder.json");
+    public static final Path INCREMENTAL = Paths.get("incremental");
 
     public static Path detectionResults() {
         return path(DETECTION_RESULTS);
@@ -59,4 +60,10 @@ public class DetectorPathManager extends PathManager {
     public static Path mvnTestTimeLog() {
         return parentPath(MVN_TEST_TIME_LOG);
     }
+
+    public static Path incrementalPath() {return path(INCREMENTAL);}
+
+    public static Path newTestOrderPath() {return incrementalPath().resolve(NEWTEST_TESTORDER);}
+
+    public static Path previousTestsPath() {return incrementalPath().resolve(PREVIOUS_TESTS);}
 }

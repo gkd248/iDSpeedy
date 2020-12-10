@@ -2,6 +2,7 @@ package edu.illinois.cs.dt.tools.runner;
 
 import com.google.gson.Gson;
 import com.reedoei.eunomia.io.files.FileUtil;
+import edu.illinois.cs.dt.tools.detection.DetectorPathManager;
 import edu.illinois.cs.dt.tools.utility.PathManager;
 import edu.illinois.cs.testrunner.data.results.TestRunResult;
 import org.apache.commons.io.FileUtils;
@@ -52,6 +53,9 @@ public class RunnerPathManager extends PathManager {
 
         Files.createDirectories(resultPath.getParent());
         Files.write(resultPath, testRunResult.toString().getBytes());
+
+        Files.createDirectories(DetectorPathManager.incrementalPath());
+
     }
 
     public static void clearTestRuns() throws IOException {

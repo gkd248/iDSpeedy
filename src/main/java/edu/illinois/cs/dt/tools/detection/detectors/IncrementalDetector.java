@@ -2,6 +2,7 @@ package edu.illinois.cs.dt.tools.detection.detectors;
 
 import edu.illinois.cs.dt.tools.detection.DetectionRound;
 import edu.illinois.cs.dt.tools.detection.DetectorUtil;
+import edu.illinois.cs.dt.tools.detection.IncrementalShuffler;
 import edu.illinois.cs.dt.tools.detection.TestShuffler;
 import edu.illinois.cs.dt.tools.detection.filters.ConfirmationFilter;
 import edu.illinois.cs.dt.tools.detection.filters.UniqueFilter;
@@ -15,14 +16,14 @@ public class IncrementalDetector extends ExecutingDetector{
     private final List<String> tests;
     private TestRunResult origResult;
 
-    private final TestShuffler testShuffler;
+    private final IncrementalShuffler testShuffler;
 
     public IncrementalDetector(final String type, final Runner runner, final int rounds, final List<String> tests) {
         super(runner, rounds, type);
 
         this.tests = tests;
 
-        this.testShuffler = new TestShuffler(type, rounds, tests);
+        this.testShuffler = new IncrementalShuffler(type, rounds, tests);
         this.origResult = DetectorUtil.originalResults(tests, runner);
 
         // Filters to be applied in order

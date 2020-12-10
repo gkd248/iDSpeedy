@@ -17,13 +17,17 @@ import edu.illinois.cs.dt.tools.runner.data.DependentTestList;
 import edu.illinois.cs.testrunner.data.results.TestRunResult;
 import edu.illinois.cs.testrunner.runner.Runner;
 import edu.illinois.cs.testrunner.configuration.Configuration;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -97,7 +101,7 @@ public abstract class ExecutingDetector implements Detector, VerbosePrinter {
 
         // *** keeping track of previous tests for next run ***
         System.out.println(DetectorPathManager.ORIGINAL_ORDER.toString());
-        Scanner read = new Scanner(new File(".dtfixingtools/original-order"));
+        Scanner read = new Scanner(new File(DetectorPathManager.originalOrderPath().toString()));
         read.useDelimiter("\n");
         List<String> tests = new ArrayList<>();
         while (read.hasNext())
@@ -109,10 +113,35 @@ public abstract class ExecutingDetector implements Detector, VerbosePrinter {
         Gson gson = new Gson();
         Type gsonType = new TypeToken<List>(){}.getType();
         String gsonString = gson.toJson(tests,gsonType);
-        Files.write(DetectorPathManager.PREVIOUS_TESTS, gsonString.getBytes());
+        Files.write(DetectorPathManager.previousTestsPath(), gsonString.getBytes(), Files.exists(DetectorPathManager.previousTestsPath())
+                ? StandardOpenOption.WRITE : StandardOpenOption.CREATE);
+
+        Files.write(listPath, StringUtil.unlines(dtList.names()).getBytes());
+
+        if(name.contains("incremental") && Files.exists(dtListPath)) {
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(new File(dtListPath.toString())));
+                String jsonData = br.readLine();
+                JSONObject json = new JSONObject(jsonData);
+                JSONArray arr = (JSONArray) json.get("dts");
+                ArrayList<DependentTest> prevDts = new ArrayList<DependentTest>();
+                JSONObject dtJson = new JSONObject(dtList.toString());
+                JSONArray arrDts = (JSONArray) dtJson.get("dts");
+                for(Object jObj : arrDts) {
+                    arr.put(jObj);
+                }
+                JSONObject jsonOut = new JSONObject();
+                jsonOut.put("dts", arr);
+                Files.write(dtListPath, jsonOut.toString().getBytes());
+
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
 
         Files.write(dtListPath, dtList.toString().getBytes());
-        Files.write(listPath, StringUtil.unlines(dtList.names()).getBytes());
     }
 
     private class RunnerIterator implements Iterator<DependentTest> {

@@ -16,20 +16,30 @@ import org.json.JSONObject;
 
 public class resultCollector{
 
-    private static final String resultsPath = "/.dtfixingtools/detection-results/incremental/";
+    private static final String resultsPath = "/.dtfixingtools/detection-results/";
 
     public static void main(String[] args) {
 
         String project = args[0];
-        Path endPath = Paths.get(project.replace("/","")+"runTimeResults.txt");
-        int idx = 0;
+        String runner = args[1];
+        try{
+            Files.createDirectories(Paths.get("results/"+runner+"/"));
+        } catch(IOException e){
+            System.out.println("Failed to create results directory");
+        }
+        Path endPath = Paths.get("results/"+runner+"/"+project.replace("/","")+"runTimeResults.txt");
         Double overallTime = 0.0d;
 
         System.out.println(System.getProperty("user.dir"));
 
+        int rounds = 0;
+        while(Files.exists(Paths.get("../"+project+resultsPath+runner+"/round"+rounds+".json"))){
+            rounds++;
+        }
+
         try{
-            while(true){
-                File file = new File("../"+project+resultsPath+"/round"+idx+".json");
+            for(int idx=0;idx<rounds;idx++){
+                File file = new File("../"+project+resultsPath+runner+"/round"+idx+".json");
                 BufferedReader br = new BufferedReader(new FileReader(file));
                 String results = br.readLine();
 
@@ -45,13 +55,12 @@ public class resultCollector{
                     Files.write(endPath, (System.lineSeparator() + formatted).getBytes(), StandardOpenOption.APPEND);
                 }
 
-                idx++;
             }
         } catch(Exception e){
             System.out.println("Reached end of results files");
         }
 
-        String formattedOverall = "Overall Runtime for "+idx+" rounds: "+overallTime.toString();
+        String formattedOverall = "Overall Runtime for "+rounds+" rounds: "+overallTime.toString();
         System.out.println(formattedOverall);
         try {
             Files.write(endPath, (System.lineSeparator() + formattedOverall).getBytes(), StandardOpenOption.APPEND);
