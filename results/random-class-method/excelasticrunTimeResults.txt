@@ -1,0 +1,23 @@
+Round 0: 4.0722338
+Round 1: 4.6820146
+Round 2: 4.7048104
+Round 3: 6.2696972
+Round 4: 4.8974109
+Round 5: 4.7680737
+Round 6: 4.3613109
+Round 7: 5.036272
+Round 8: 4.5543219
+Round 9: 3.9683941
+Round 10: 6.1754529
+Round 11: 4.6178337
+Round 12: 4.4060515
+Round 13: 4.3847884
+Round 14: 4.8306367
+Round 15: 5.047386
+Round 16: 4.3484009
+Round 17: 5.4436015
+Round 18: 5.5972328
+Round 19: 5.4178779
+Overall Runtime for 20 rounds: 97.5838018
+Number of flaky tests found: 0
+Flaky Tests: []
