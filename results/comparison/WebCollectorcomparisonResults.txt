@@ -1,7 +1,0 @@
-Incremental Overall Runtime: 28.717261
-Incremental Number of Flaky Tests: 0
-Random Overall Runtime: 22.8949397
-Random Number of Flaky Tests: 0
-
-Random ran faster than Incremental.
-Both runners found the same amount of flaky tests.
